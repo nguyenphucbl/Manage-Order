@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import ClientComponent from "./ClientComponent";
 
 export default function Home() {
   return (
@@ -10,6 +11,7 @@ export default function Home() {
       <Button className="mt-6" variant={"destructive"} size={"lg"}>
         Click Me
       </Button>
+      <ClientComponent />
     </main>
   );
 }
