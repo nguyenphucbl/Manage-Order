@@ -78,7 +78,10 @@ const request = async <Response>(
       baseHeaders.Authorization = `Bearer ${accessToken}`;
     }
   }
-  const baseUrl = options?.baseUrl || process.env.NEXT_PUBLIC_API_ENDPOINT;
+  const baseUrl =
+    options?.baseUrl === undefined
+      ? process.env.NEXT_PUBLIC_API_ENDPOINT
+      : options.baseUrl;
   const fullUrl = `${baseUrl}/${normalizePath(url)}`;
   const res = await fetch(fullUrl, {
     ...options,
@@ -140,8 +143,8 @@ const request = async <Response>(
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
     }
-    return data;
   }
+  return data;
 };
 
 const http = {
