@@ -58,7 +58,78 @@ export class EntityError extends HttpError {
 let clientLogoutRequest: null | Promise<any> = null;
 
 export const isClient = typeof window !== "undefined";
+// Tách xử lý lỗi thành hàm riêng biệt
+const handleResponseError = async (
+  res: Response,
+  data: any,
+  baseHeaders: HeadersInit,
+  options?: CustomOptions
+): Promise<never> => {
+  if (res.status === ENTITY_ERROR_STATUS) {
+    throw new EntityError(
+      data as {
+        status: typeof ENTITY_ERROR_STATUS;
+        payload: EntityErrorPayload;
+      }
+    );
+  }
+  if (res.status === AUTHENTICATION_ERROR_STATUS) {
+    await handleAuthenticationError(baseHeaders, options);
+  }
+  throw new HttpError(data);
+};
 
+// Xử lý lỗi xác thực
+const handleAuthenticationError = async (
+  baseHeaders: HeadersInit,
+  options?: CustomOptions
+): Promise<void> => {
+  if (isClient) {
+    if (!clientLogoutRequest) {
+      clientLogoutRequest = fetch("/api/auth/logout", {
+        method: "POST",
+        body: null,
+        headers: baseHeaders,
+      });
+    }
+    try {
+      await clientLogoutRequest;
+    } catch (error) {
+      console.log("error");
+    } finally {
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      clientLogoutRequest = null;
+      location.href = "/login";
+    }
+  } else {
+    const accessToken = (options?.headers as any)?.Authorization.split(" ")[1];
+    if (accessToken) {
+      redirect(`logout?accessToken=${accessToken}`);
+    } else {
+      redirect("/login");
+    }
+  }
+};
+// Xử lý storage khi login/logout
+const handleStorage = (url: string, payload: any): void => {
+  if (!isClient) return;
+  const normalizeUrl = normalizePath(url);
+  if (normalizeUrl === "api/auth/login") {
+    try {
+      const { accessToken, refreshToken } = (payload as LoginResType).data;
+      if (accessToken && refreshToken) {
+        localStorage.setItem("accessToken", accessToken);
+        localStorage.setItem("refreshToken", refreshToken);
+      }
+    } catch (error) {
+      console.log("Failed to store auth tokens", error);
+    }
+  } else if (normalizeUrl === "api/auth/logout") {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+  }
+};
 const request = async <Response>(
   method: "GET" | "POST" | "PUT" | "DELETE",
   url: string,
@@ -72,16 +143,15 @@ const request = async <Response>(
   }
   const baseHeaders: HeadersInit =
     body instanceof FormData ? {} : { "Content-Type": "application/json" };
+
+  // Thêm token xác thực nếu đang ở client-side
   if (isClient) {
     const accessToken = localStorage.getItem("accessToken");
     if (accessToken) {
       baseHeaders.Authorization = `Bearer ${accessToken}`;
     }
   }
-  const baseUrl =
-    options?.baseUrl === undefined
-      ? process.env.NEXT_PUBLIC_API_ENDPOINT
-      : options.baseUrl;
+  const baseUrl = options?.baseUrl ?? process.env.NEXT_PUBLIC_API_ENDPOINT;
   const fullUrl = `${baseUrl}/${normalizePath(url)}`;
   const res = await fetch(fullUrl, {
     ...options,
@@ -92,58 +162,31 @@ const request = async <Response>(
     method,
     body,
   });
-  const payload: Response = await res.json();
-  const data = { status: res.status, payload };
-  if (!res.ok) {
-    if (res.status === ENTITY_ERROR_STATUS) {
-      throw new EntityError(
-        data as {
-          status: typeof ENTITY_ERROR_STATUS;
-          payload: EntityErrorPayload;
-        }
-      );
-    }
-    if (res.status === AUTHENTICATION_ERROR_STATUS) {
-      if (isClient) {
-        if (!clientLogoutRequest) {
-          clientLogoutRequest = fetch("/api/auth/logout", {
-            method: "POST",
-            body: null,
-            headers: {
-              ...baseHeaders,
-            },
-          });
-          try {
-            await clientLogoutRequest;
-          } catch (error) {
-          } finally {
-            localStorage.removeItem("accessToken");
-            localStorage.removeItem("refreshToken");
-            clientLogoutRequest = null;
-            location.href = "/login";
-          }
-        }
-      } else {
-        const accessToken = (options?.headers as any)?.Authorization.split(
-          " "
-        )[1];
-        redirect(`logout?accessToken=${accessToken}`);
-      }
+
+  // Xử lý response
+  let payload: Response;
+  try {
+    payload = await res.json();
+  } catch (error) {
+    // Nếu không thể parse JSON, có thể là lỗi không xác định
+    // Hoặc lỗi không phải JSON (như HTML, văn bản thuần túy, v.v.)
+    if (res.ok) {
+      payload = {} as Response;
     } else {
-      throw new HttpError(data);
+      throw new HttpError({
+        status: res.status,
+        payload: { message: "Lỗi không xác định" },
+      });
     }
   }
-  if (isClient) {
-    const normalizeUrl = normalizePath(url);
-    if (normalizeUrl === "api/auth/login") {
-      const { accessToken, refreshToken } = (payload as LoginResType).data;
-      localStorage.setItem("accessToken", accessToken);
-      localStorage.setItem("refreshToken", refreshToken);
-    } else if (normalizeUrl === "api/auth/logout") {
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-    }
+  const data = { status: res.status, payload };
+  // Xử lý lỗi nếu response không ok
+  if (!res.ok) {
+    await handleResponseError(res, data, baseHeaders, options);
   }
+  // Xử lý local storage nếu ở client-side (login/logout)
+  handleStorage(url, payload);
+  // Trả về payload nếu response ok
   return data;
 };
 

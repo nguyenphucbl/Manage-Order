@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { Roboto, Poppins } from "next/font/google";
 import "./globals.css";
-import envConfig from "../config";
-console.log(envConfig, "envConfig");
 const roboto = Roboto({
   variable: "--font-roboto",
   weight: ["100", "300", "400", "500", "700", "900"],
