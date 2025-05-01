@@ -58,7 +58,8 @@ export class EntityError extends HttpError {
 let clientLogoutRequest: null | Promise<any> = null;
 
 export const isClient = typeof window !== "undefined";
-// Tách xử lý lỗi thành hàm riêng biệt
+
+//NOTE Tách xử lý lỗi thành hàm riêng biệt
 const handleResponseError = async (
   res: Response,
   data: any,
@@ -79,7 +80,7 @@ const handleResponseError = async (
   throw new HttpError(data);
 };
 
-// Xử lý lỗi xác thực
+//NOTE Xử lý lỗi xác thực
 const handleAuthenticationError = async (
   baseHeaders: HeadersInit,
   options?: CustomOptions
@@ -111,7 +112,8 @@ const handleAuthenticationError = async (
     }
   }
 };
-// Xử lý storage khi login/logout
+
+//NOTE Xử lý storage khi login/logout
 const handleStorage = (url: string, payload: any): void => {
   if (!isClient) return;
   const normalizeUrl = normalizePath(url);
@@ -130,6 +132,8 @@ const handleStorage = (url: string, payload: any): void => {
     localStorage.removeItem("refreshToken");
   }
 };
+
+//NOTE Xử lý request
 const request = async <Response>(
   method: "GET" | "POST" | "PUT" | "DELETE",
   url: string,
