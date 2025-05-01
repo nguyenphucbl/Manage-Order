@@ -25,7 +25,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressContentEditableWarning>
+    <html lang="en" suppressHydrationWarning>
       <body className={`${roboto.variable} ${poppins.variable} antialiased`}>
         <AppProvider>
           <ThemeProvider

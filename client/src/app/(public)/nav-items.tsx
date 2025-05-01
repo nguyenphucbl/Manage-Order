@@ -1,8 +1,9 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import { cn, getFromLocalStorage } from "@/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 const menuItems = [
   {
@@ -12,6 +13,7 @@ const menuItems = [
   {
     title: "Đơn hàng",
     href: "/orders",
+    authRequired: true,
   },
   {
     title: "Đăng nhập",
@@ -26,9 +28,21 @@ const menuItems = [
 ];
 
 export default function NavItems({ className }: { className?: string }) {
+  const [isAuth, setIsAuth] = useState<Boolean>(false);
+  useEffect(() => {
+    setIsAuth(Boolean(getFromLocalStorage("accessToken")));
+  }, []);
   const pathname = usePathname();
   return menuItems.map((item) => {
     const isActive = pathname === item.href;
+
+    if (
+      (item.authRequired === true && !isAuth) ||
+      (item.authRequired === false && isAuth)
+    ) {
+      return null;
+    }
+
     return (
       <Link
         href={item.href}

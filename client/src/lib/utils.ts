@@ -42,3 +42,10 @@ export const handleErrorApi = ({
     });
   }
 };
+const isBrowser = typeof window !== "undefined";
+export const getFromLocalStorage = (key: string) => {
+  if (!isBrowser) return null;
+  const value = localStorage.getItem(key);
+  if (!value) return null;
+  return value;
+};
