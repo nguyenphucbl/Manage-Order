@@ -16,6 +16,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useLoginMutation } from "@/queries/useAuth";
 import { toast } from "sonner";
 import { handleErrorApi } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 export default function LoginForm() {
   const form = useForm<LoginBodyType>({
@@ -25,6 +26,7 @@ export default function LoginForm() {
       password: "",
     },
   });
+  const router = useRouter();
   const loginMutation = useLoginMutation();
   const onSubmit = async (data: LoginBodyType) => {
     try {
@@ -32,6 +34,7 @@ export default function LoginForm() {
       toast.success("Đăng nhập thành công", {
         description: res.payload.message,
       });
+      router.push("/manage/dashboard");
     } catch (error) {
       handleErrorApi({
         error,
@@ -95,8 +98,12 @@ export default function LoginForm() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full">
-                Đăng nhập
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={loginMutation.isPending}
+              >
+                {loginMutation.isPending ? "Đang xử lý..." : "Đăng nhập"}
               </Button>
               <Button variant="outline" className="w-full" type="button">
                 Đăng nhập bằng Google
