@@ -14,10 +14,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useAccountProfile } from "@/queries/useAccount";
+import { useAccountMe, useAccountMeUpdate } from "@/queries/useAccount";
+import { useUploadMediaMutation } from "@/queries/useMedia";
+import { toast } from "sonner";
+import { handleErrorApi } from "@/lib/utils";
 
 export default function UpdateProfileForm() {
-  const { data } = useAccountProfile();
+  const { data, refetch } = useAccountMe();
+  const updateMeMutation = useAccountMeUpdate();
+  const uploadMediaMutation = useUploadMediaMutation();
   const profile = data?.payload.data;
   const form = useForm<UpdateMeBodyType>({
     resolver: zodResolver(UpdateMeBody),
@@ -26,8 +31,42 @@ export default function UpdateProfileForm() {
       avatar: "",
     },
   });
+
+  // Lấy các trạng thái của form để kiểm soát UI
+  const { isDirty, isSubmitting, isValid } = form.formState;
   const avatar = form.watch("avatar");
   const name = form.watch("name");
+  const handleReset = () => {
+    form.reset();
+    setFile(null);
+    setPreviewUrl(null);
+  };
+  const onSubmit = async (data: UpdateMeBodyType) => {
+    if (updateMeMutation.isPending) return;
+    try {
+      let body = {
+        ...data,
+      };
+      if (file) {
+        const formData = new FormData();
+        formData.append("file", file);
+        const res = await uploadMediaMutation.mutateAsync(formData);
+        const imageUrl = res.payload.data;
+        body = {
+          ...data,
+          avatar: imageUrl,
+        };
+      }
+      const updateMe = await updateMeMutation.mutateAsync(body);
+      toast.success("Cập nhật thông tin", {
+        description: updateMe.payload.message,
+      });
+      // Cập nhật lại dữ liệu trong cache
+      refetch();
+    } catch (error) {
+      handleErrorApi({ error, setError: form.setError, duration: 3000 });
+    }
+  };
   // preview image
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -78,6 +117,8 @@ export default function UpdateProfileForm() {
       <form
         noValidate
         className="grid auto-rows-max items-start gap-4 md:gap-8"
+        onReset={handleReset}
+        onSubmit={form.handleSubmit(onSubmit)}
       >
         <Card x-chunk="dashboard-07-chunk-0">
           <CardHeader>
@@ -139,11 +180,20 @@ export default function UpdateProfileForm() {
               />
 
               <div className=" items-center gap-2 md:ml-auto flex">
-                <Button variant="outline" size="sm" type="reset">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  type="reset"
+                  disabled={!isDirty}
+                >
                   Hủy
                 </Button>
-                <Button size="sm" type="submit">
-                  Lưu thông tin
+                <Button
+                  size="sm"
+                  type="submit"
+                  disabled={!isValid || isSubmitting || !isDirty}
+                >
+                  {isSubmitting ? "Đang cập nhật..." : "Lưu Thông Tin"}
                 </Button>
               </div>
             </div>
