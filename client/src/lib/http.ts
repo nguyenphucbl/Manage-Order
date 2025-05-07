@@ -106,7 +106,7 @@ const handleAuthenticationError = async (
   } else {
     const accessToken = (options?.headers as any)?.Authorization.split(" ")[1];
     if (accessToken) {
-      redirect(`logout?accessToken=${accessToken}`);
+      redirect(`/logout?accessToken=${accessToken}`);
     } else {
       redirect("/login");
     }

@@ -5,13 +5,28 @@ const publicPaths = ["/login"];
 // This function can be marked `async` if using `await` inside
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const isAuth = Boolean(request.cookies.get("accessToken")?.value);
+  const accessToken = Boolean(request.cookies.get("accessToken")?.value);
+  const refreshToken = Boolean(request.cookies.get("refreshToken")?.value);
   const isPublicPath = publicPaths.some((path) => pathname.startsWith(path));
   const isPrivatePath = privatePaths.some((path) => pathname.startsWith(path));
-  if (isPrivatePath && !isAuth) {
+
+  // If the user is not logged in and tries to access a private page, redirect them to the login page
+  if (isPrivatePath && !refreshToken) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
-  if (isPublicPath && isAuth) {
+
+  // if the user expired access token
+  if (isPrivatePath && !accessToken) {
+    const url = new URL("/logout", request.url);
+    url.searchParams.set(
+      "refreshToken",
+      request.cookies.get("refreshToken")?.value || ""
+    );
+    return NextResponse.redirect(url);
+  }
+
+  // If the user is logged in and tries to access the login page, redirect them to the home page
+  if (isPublicPath && refreshToken) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
