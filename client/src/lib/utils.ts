@@ -49,3 +49,7 @@ export const getFromLocalStorage = (key: string) => {
   if (!value) return null;
   return value;
 };
+export const setToLocalStorage = (key: string, value: string) => {
+  if (!isBrowser) return;
+  localStorage.setItem(key, value);
+};
