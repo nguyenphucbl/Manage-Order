@@ -16,12 +16,13 @@ export function middleware(request: NextRequest) {
   }
 
   // if the user expired access token
-  if (isPrivatePath && !accessToken) {
-    const url = new URL("/logout", request.url);
+  if (isPrivatePath && !accessToken && refreshToken) {
+    const url = new URL("/refresh-token", request.url);
     url.searchParams.set(
       "refreshToken",
       request.cookies.get("refreshToken")?.value || ""
     );
+    url.searchParams.set("redirect", pathname);
     return NextResponse.redirect(url);
   }
 

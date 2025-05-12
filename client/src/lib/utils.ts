@@ -4,7 +4,8 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { EntityError } from "./http";
 import { toast } from "sonner";
-
+import jwt from "jsonwebtoken";
+import authApiRequest from "@/apiRequest/auth";
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -52,4 +53,47 @@ export const getFromLocalStorage = (key: string) => {
 export const setToLocalStorage = (key: string, value: string) => {
   if (!isBrowser) return;
   localStorage.setItem(key, value);
+};
+
+export const checkAndRefreshToken = async (param?: {
+  onError?: () => void;
+  onSuccess?: () => void;
+}) => {
+  const accessToken = getFromLocalStorage("accessToken");
+  const refreshToken = getFromLocalStorage("refreshToken");
+  if (!accessToken || !refreshToken) return;
+  const decodedAccessToken = jwt.decode(accessToken) as {
+    exp: number;
+    iat: number;
+  };
+  const decodedRefreshToken = jwt.decode(refreshToken) as {
+    exp: number;
+    iat: number;
+  };
+
+  const currentTime = Math.floor(Date.now() / 1000);
+  if (decodedRefreshToken.exp < currentTime) {
+    // Refresh token expired
+    setToLocalStorage("accessToken", "");
+    setToLocalStorage("refreshToken", "");
+    if (param?.onError) param.onError();
+    return;
+  }
+  // Check if the access token have 1/3 of its lifetime left
+  const tokenLifetime = decodedAccessToken.exp - decodedAccessToken.iat;
+  const remainingTime = decodedAccessToken.exp - currentTime;
+
+  if (remainingTime < tokenLifetime / 3) {
+    try {
+      const res = await authApiRequest.refreshToken();
+      if (res?.status === 200) {
+        const { accessToken, refreshToken } = res.payload.data;
+        setToLocalStorage("accessToken", accessToken);
+        setToLocalStorage("refreshToken", refreshToken);
+      }
+      if (param?.onSuccess) param.onSuccess();
+    } catch (error) {
+      if (param?.onError) param.onError();
+    }
+  }
 };
