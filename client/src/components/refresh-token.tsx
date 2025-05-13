@@ -1,7 +1,7 @@
 "use client";
 
 import { checkAndRefreshToken } from "@/lib/utils";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 const UNAUTHENTICATED_PATHS = [
   "/login",
@@ -11,7 +11,7 @@ const UNAUTHENTICATED_PATHS = [
 ];
 export default function RefreshToken() {
   const pathName = usePathname();
-  const router = useRouter();
+
   useEffect(() => {
     if (UNAUTHENTICATED_PATHS.includes(pathName)) return;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -32,7 +32,7 @@ export default function RefreshToken() {
         onError: () => {
           clearTimeout(initialTimeout);
           clearInterval(interval);
-          router.push("/login");
+          location.href = "/login";
         },
       });
     }, TIMEOUT);
@@ -40,6 +40,6 @@ export default function RefreshToken() {
       clearTimeout(initialTimeout);
       clearInterval(interval);
     };
-  }, [pathName, router]);
+  }, [pathName]);
   return null;
 }

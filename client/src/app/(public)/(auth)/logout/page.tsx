@@ -14,20 +14,22 @@ export default function LogoutPage() {
   const accessTokenFromUrl = searchParams.get("accessToken");
   useEffect(() => {
     if (
-      ref.current ||
-      (refreshTokenFromUrl &&
+      (ref.current &&
+        refreshTokenFromUrl &&
         refreshTokenFromUrl !== getFromLocalStorage("refreshToken")) ||
       (accessTokenFromUrl &&
         accessTokenFromUrl !== getFromLocalStorage("accessToken"))
     )
-      return;
+      return router.push("/");
+
     ref.current = true;
     mutateAsync().then((res) => {
       setTimeout(() => {
         ref.current = false;
       }, 1000);
-      router.push("/login");
+
+      window.location.href = "/login";
     });
   }, [mutateAsync, router, refreshTokenFromUrl, accessTokenFromUrl]);
-  return <div>LogoutPage</div>;
+  return <div>Logout...</div>;
 }

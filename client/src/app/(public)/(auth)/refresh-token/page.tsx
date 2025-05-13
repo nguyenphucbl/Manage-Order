@@ -20,6 +20,8 @@ export default function RefreshTokenPage() {
           router.push(redirectPath || "/");
         },
       });
+    } else {
+      router.push("/");
     }
   }, [router, refreshTokenFromUrl, redirectPath]);
   return <div>LogoutPage</div>;

@@ -12,19 +12,17 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useLogoutMutation } from "@/queries/useAuth";
 import { handleErrorApi } from "@/lib/utils";
-import { useRouter } from "next/navigation";
 import { useAccountMe } from "@/queries/useAccount";
 
 export default function DropdownAvatar() {
   const logoutMutation = useLogoutMutation();
-  const router = useRouter();
   const { data } = useAccountMe();
   const profile = data?.payload.data;
   const handleLogout = async () => {
     if (logoutMutation.isPending) return;
     try {
       await logoutMutation.mutateAsync();
-      router.push("/login");
+      window.location.href = "/login";
     } catch (error) {
       handleErrorApi({
         error,

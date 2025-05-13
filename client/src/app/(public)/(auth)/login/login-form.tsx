@@ -1,4 +1,5 @@
 "use client";
+import { useAppContext } from "@/components/app-provider";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -7,16 +8,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Form, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useForm } from "react-hook-form";
-import { Form, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import { handleErrorApi } from "@/lib/utils";
+import { useLoginMutation } from "@/queries/useAuth";
 import { LoginBody, LoginBodyType } from "@/schemaValidations/auth.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useLoginMutation } from "@/queries/useAuth";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { handleErrorApi } from "@/lib/utils";
-import { useRouter } from "next/navigation";
 
 export default function LoginForm() {
   const form = useForm<LoginBodyType>({
@@ -26,11 +28,15 @@ export default function LoginForm() {
       password: "",
     },
   });
+  const { setIsAuth } = useAppContext();
+  const searchParams = useSearchParams();
+  const clearTokens = searchParams.get("clearTokens");
   const router = useRouter();
   const loginMutation = useLoginMutation();
   const onSubmit = async (data: LoginBodyType) => {
     try {
       const res = await loginMutation.mutateAsync(data);
+      setIsAuth(true);
       toast.success("Đăng nhập thành công", {
         description: res.payload.message,
       });
@@ -43,6 +49,11 @@ export default function LoginForm() {
       });
     }
   };
+  useEffect(() => {
+    if (clearTokens) {
+      setIsAuth(false);
+    }
+  }, [clearTokens, setIsAuth]);
   return (
     <Card className="mx-auto max-w-sm">
       <CardHeader>

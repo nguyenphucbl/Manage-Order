@@ -12,7 +12,9 @@ export function middleware(request: NextRequest) {
 
   // If the user is not logged in and tries to access a private page, redirect them to the login page
   if (isPrivatePath && !refreshToken) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    const url = new URL("/login", request.url);
+    url.searchParams.set("clearTokens", "true");
+    return NextResponse.redirect(url);
   }
 
   // if the user expired access token

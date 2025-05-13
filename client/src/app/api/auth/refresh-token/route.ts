@@ -1,7 +1,6 @@
 import authApiRequest from "@/apiRequest/auth";
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
-import { HttpError } from "@/lib/http";
 export async function POST(request: Request) {
   const cookieStore = cookies();
   const refreshToken = cookieStore.get("refreshToken")?.value || "";
@@ -37,10 +36,6 @@ export async function POST(request: Request) {
     return Response.json(payload, { status: 200 });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
-    console.log(error);
-    if (error instanceof HttpError) {
-      return Response.json(error.payload, { status: error.status });
-    }
     return Response.json(
       { message: error.message ?? "Error" },
       { status: 401 }
