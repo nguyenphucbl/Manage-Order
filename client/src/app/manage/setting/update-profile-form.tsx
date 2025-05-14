@@ -1,23 +1,22 @@
 "use client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { handleErrorApi } from "@/lib/utils";
+import { useAccountMe, useAccountMeUpdate } from "@/queries/useAccount";
+import { useUploadMediaMutation } from "@/queries/useMedia";
 import {
-  AccountResType,
   UpdateMeBody,
   UpdateMeBodyType,
 } from "@/schemaValidations/account.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormField, FormItem, FormMessage } from "@/components/ui/form";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Upload } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useAccountMe, useAccountMeUpdate } from "@/queries/useAccount";
-import { useUploadMediaMutation } from "@/queries/useMedia";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { handleErrorApi } from "@/lib/utils";
 
 export default function UpdateProfileForm() {
   const { data, refetch } = useAccountMe();
@@ -28,7 +27,7 @@ export default function UpdateProfileForm() {
     resolver: zodResolver(UpdateMeBody),
     defaultValues: {
       name: "",
-      avatar: "",
+      avatar: undefined,
     },
   });
 
@@ -94,7 +93,7 @@ export default function UpdateProfileForm() {
     if (previewUrl) {
       return previewUrl;
     }
-    return avatar || profile?.avatar || "";
+    return avatar || profile?.avatar || undefined;
   }, [avatar, previewUrl, profile]);
   useEffect(() => {
     return () => {
@@ -108,10 +107,17 @@ export default function UpdateProfileForm() {
     if (profile) {
       form.reset({
         name: profile.name,
-        avatar: profile.avatar ?? "",
+        avatar: profile.avatar ?? undefined,
       });
     }
   }, [profile, form]);
+  console.log("Form state:", {
+    isDirty,
+    isValid,
+    errors: form.formState.errors,
+    values: form.getValues(),
+    defaultValues: form.formState.defaultValues,
+  });
   return (
     <Form {...form}>
       <form
@@ -133,7 +139,7 @@ export default function UpdateProfileForm() {
                   <FormItem>
                     <div className="flex gap-2 items-start justify-start">
                       <Avatar className="aspect-square w-[100px] h-[100px] rounded-md object-cover">
-                        <AvatarImage src={previewAvatar} />
+                        <AvatarImage src={previewAvatar} alt="Preview" />
                         <AvatarFallback className="rounded-none">
                           {name.slice(0, 2).toUpperCase()}
                         </AvatarFallback>
@@ -191,7 +197,7 @@ export default function UpdateProfileForm() {
                 <Button
                   size="sm"
                   type="submit"
-                  disabled={!isValid || isSubmitting || !isDirty}
+                  disabled={isSubmitting || !isDirty || !isValid}
                 >
                   {isSubmitting ? "Đang cập nhật..." : "Lưu Thông Tin"}
                 </Button>

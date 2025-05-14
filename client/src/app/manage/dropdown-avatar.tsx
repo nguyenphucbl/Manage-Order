@@ -39,11 +39,11 @@ export default function DropdownAvatar() {
         >
           <Avatar>
             <AvatarImage
-              src={profile?.avatar ?? undefined}
-              alt={profile?.name}
+              src={profile?.avatar ? profile?.avatar : ""}
+              alt={profile?.name || ""}
             />
             <AvatarFallback>
-              {profile?.name.slice(0, 2).toUpperCase()}
+              {profile?.name.slice(0, 2).toUpperCase() || "NA"}
             </AvatarFallback>
           </Avatar>
         </Button>
