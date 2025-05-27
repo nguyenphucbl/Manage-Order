@@ -111,13 +111,6 @@ export default function UpdateProfileForm() {
       });
     }
   }, [profile, form]);
-  console.log("Form state:", {
-    isDirty,
-    isValid,
-    errors: form.formState.errors,
-    values: form.getValues(),
-    defaultValues: form.formState.defaultValues,
-  });
   return (
     <Form {...form}>
       <form
