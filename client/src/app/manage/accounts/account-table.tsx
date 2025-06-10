@@ -53,6 +53,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useSearchParams } from "next/navigation";
 import AutoPagination from "@/components/auto-pagination";
+import {
+  useDeleteAccountEmployee,
+  useGetAccountList,
+} from "@/queries/useAccount";
+import { handleErrorApi } from "@/lib/utils";
+import { toast } from "sonner";
 
 type AccountItem = AccountListResType["data"][0];
 
@@ -70,6 +76,14 @@ const AccountTableContext = createContext<{
 
 export const columns: ColumnDef<AccountType>[] = [
   {
+    id: "stt",
+    header: "STT",
+    cell({ row }) {
+      const getRowIndex = row.index + 1;
+      return <div>{getRowIndex}</div>;
+    },
+  },
+  {
     accessorKey: "id",
     header: "ID",
   },
@@ -81,7 +95,7 @@ export const columns: ColumnDef<AccountType>[] = [
         <Avatar className="aspect-square w-[100px] h-[100px] rounded-md object-cover">
           <AvatarImage src={row.getValue("avatar")} />
           <AvatarFallback className="rounded-none">
-            {row.original.name}
+            {row.original.name.slice(0, 1).toLocaleUpperCase()}
           </AvatarFallback>
         </Avatar>
       </div>
@@ -105,7 +119,6 @@ export const columns: ColumnDef<AccountType>[] = [
         </Button>
       );
     },
-    cell: ({ row }) => <div className="lowercase">{row.getValue("email")}</div>,
   },
   {
     id: "actions",
@@ -149,6 +162,21 @@ function AlertDialogDeleteAccount({
   employeeDelete: AccountItem | null;
   setEmployeeDelete: (value: AccountItem | null) => void;
 }) {
+  const { mutateAsync } = useDeleteAccountEmployee();
+  const handleDelete = async () => {
+    if (!employeeDelete) return;
+    try {
+      const result = await mutateAsync({ id: employeeDelete.id });
+      toast.success("Xóa tài khoản thành công", {
+        description: result.payload.message,
+      });
+      setEmployeeDelete(null);
+    } catch (error) {
+      handleErrorApi({
+        error,
+      });
+    }
+  };
   return (
     <AlertDialog
       open={Boolean(employeeDelete)}
@@ -162,16 +190,16 @@ function AlertDialogDeleteAccount({
         <AlertDialogHeader>
           <AlertDialogTitle>Xóa nhân viên?</AlertDialogTitle>
           <AlertDialogDescription>
-            Tài khoản{" "}
-            <span className="bg-foreground text-primary-foreground rounded px-1">
+            Tài khoản
+            <span className="bg-foreground text-primary-foreground rounded px-1 mx-2">
               {employeeDelete?.name}
-            </span>{" "}
+            </span>
             sẽ bị xóa vĩnh viễn
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction>Continue</AlertDialogAction>
+          <AlertDialogAction onClick={handleDelete}>Continue</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
@@ -188,8 +216,9 @@ export default function AccountTable() {
   const [employeeDelete, setEmployeeDelete] = useState<AccountItem | null>(
     null
   );
+  const accountList = useGetAccountList();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const data: any[] = [];
+  const data = accountList.data?.payload.data ?? [];
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});

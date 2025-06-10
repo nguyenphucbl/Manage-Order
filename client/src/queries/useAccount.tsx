@@ -31,6 +31,7 @@ export const useGetAccount = ({ id }: { id: number }) => {
   return useQuery({
     queryKey: ["account", id],
     queryFn: () => accountApiRequest.getEmployee(id),
+    enabled: Boolean(id),
   });
 };
 export const useAddAccountEmployee = () => {
