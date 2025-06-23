@@ -38,5 +38,5 @@ export function middleware(request: NextRequest) {
 
 // See "Matching Paths" below to learn more
 export const config = {
-  matcher: ["/manage/:path*", "/login"],
+  matcher: ["/manage/:path*", "/login/:path*"],
 };
