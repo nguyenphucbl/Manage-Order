@@ -7,7 +7,10 @@ import {
 } from "@/schemaValidations/dish.schema";
 
 const dishApiRequest = {
-  list: () => http.get<DishListResType>("/dishes"),
+  list: () =>
+    http.get<DishListResType>("/dishes", {
+      next: { tags: ["dishes"] },
+    }),
   getDetail: (id: number) => http.get<DishResType>(`/dishes/${id}`),
   add: (body: CreateDishBodyType) => http.post<DishResType>("/dishes", body),
   update: (id: number, body: UpdateDishBodyType) =>

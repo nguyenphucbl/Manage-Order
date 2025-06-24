@@ -1,4 +1,5 @@
 "use client";
+import revalidateApiRequest from "@/apiRequest/revalidate";
 import { useImagePreview } from "@/app/hooks/useImagePreview";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -93,6 +94,7 @@ export default function EditDish({
         id,
         ...body,
       });
+      await revalidateApiRequest("dishes");
       toast.success("Cập nhật món ăn thành công", {
         description: `Món ăn ${res.payload.data.name} đã được cập nhật thành công.`,
       });

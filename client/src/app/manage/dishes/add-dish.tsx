@@ -40,6 +40,7 @@ import { useImagePreview } from "@/app/hooks/useImagePreview";
 import { useAddDish } from "@/queries/useDish";
 import { useUploadMediaMutation } from "@/queries/useMedia";
 import { toast } from "sonner";
+import revalidateApiRequest from "@/apiRequest/revalidate";
 
 export default function AddDish() {
   const [open, setOpen] = useState(false);
@@ -85,6 +86,7 @@ export default function AddDish() {
         }
       }
       const response = await addDishMutation.mutateAsync(body);
+      await revalidateApiRequest("dishes");
       toast.success("Thêm món ăn thành công", {
         description: response.payload.message,
       });
