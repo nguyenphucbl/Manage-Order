@@ -28,7 +28,7 @@ export default function LoginForm() {
       password: "",
     },
   });
-  const { setIsAuth } = useAppContext();
+  const { setRole } = useAppContext();
   const searchParams = useSearchParams();
   const clearTokens = searchParams.get("clearTokens");
   const router = useRouter();
@@ -36,7 +36,7 @@ export default function LoginForm() {
   const onSubmit = async (data: LoginBodyType) => {
     try {
       const res = await loginMutation.mutateAsync(data);
-      setIsAuth(true);
+      setRole(res.payload.data.account.role);
       toast.success("Đăng nhập thành công", {
         description: res.payload.message,
       });
@@ -51,9 +51,9 @@ export default function LoginForm() {
   };
   useEffect(() => {
     if (clearTokens) {
-      setIsAuth(false);
+      setRole(undefined);
     }
-  }, [clearTokens, setIsAuth]);
+  }, [clearTokens, setRole]);
   return (
     <Card className="mx-auto max-w-sm">
       <CardHeader>

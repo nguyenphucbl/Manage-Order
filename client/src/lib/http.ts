@@ -1,7 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { redirect } from "next/navigation";
-import { normalizePath } from "./utils";
+import {
+  normalizePath,
+  removeFromLocalStorage,
+  setToLocalStorage,
+} from "./utils";
 import { LoginResType } from "@/schemaValidations/auth.schema";
 
 type CustomOptions = Omit<RequestInit, "method"> & {
@@ -98,8 +102,8 @@ const handleAuthenticationError = async (
     } catch (error) {
       console.log("error");
     } finally {
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
+      removeFromLocalStorage("accessToken");
+      removeFromLocalStorage("refreshToken");
       clientLogoutRequest = null;
       location.href = "/login";
     }
@@ -117,19 +121,21 @@ const handleAuthenticationError = async (
 const handleStorage = (url: string, payload: any): void => {
   if (!isClient) return;
   const normalizeUrl = normalizePath(url);
-  if (normalizeUrl === "api/auth/login") {
+  const pathAllowedLogin = ["api/auth/login", "api/guest/auth/login"];
+  const pathAllowedLogout = ["api/auth/logout", "api/guest/auth/logout"];
+  if (pathAllowedLogin.includes(normalizeUrl)) {
     try {
       const { accessToken, refreshToken } = (payload as LoginResType).data;
       if (accessToken && refreshToken) {
-        localStorage.setItem("accessToken", accessToken);
-        localStorage.setItem("refreshToken", refreshToken);
+        setToLocalStorage("accessToken", accessToken);
+        setToLocalStorage("refreshToken", refreshToken);
       }
     } catch (error) {
       console.log("Failed to store auth tokens", error);
     }
-  } else if (normalizeUrl === "api/auth/logout") {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
+  } else if (pathAllowedLogout.includes(normalizeUrl)) {
+    removeFromLocalStorage("accessToken");
+    removeFromLocalStorage("refreshToken");
   }
 };
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { useAppContext } from "@/components/app-provider";
 import { getFromLocalStorage } from "@/lib/utils";
 import { useLogoutMutation } from "@/queries/useAuth";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -12,6 +13,7 @@ function Logout() {
   const searchParams = useSearchParams();
   const refreshTokenFromUrl = searchParams.get("refreshToken");
   const accessTokenFromUrl = searchParams.get("accessToken");
+  const { setRole } = useAppContext();
   useEffect(() => {
     if (
       (ref.current &&
@@ -27,10 +29,10 @@ function Logout() {
       setTimeout(() => {
         ref.current = false;
       }, 1000);
-
+      setRole(undefined);
       window.location.href = "/login";
     });
-  }, [mutateAsync, router, refreshTokenFromUrl, accessTokenFromUrl]);
+  }, [mutateAsync, router, refreshTokenFromUrl, accessTokenFromUrl, setRole]);
   return <div>Logout...</div>;
 }
 

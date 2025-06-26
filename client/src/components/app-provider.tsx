@@ -10,7 +10,12 @@ import {
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import RefreshToken from "./refresh-token";
-import { getFromLocalStorage, removeFromLocalStorage } from "@/lib/utils";
+import {
+  decodeToken,
+  getFromLocalStorage,
+  removeFromLocalStorage,
+} from "@/lib/utils";
+import { RoleType } from "@/types/jwt.types";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -20,8 +25,8 @@ const queryClient = new QueryClient({
   },
 });
 const AppContext = createContext({
-  isAuth: false,
-  setIsAuth: (isAuth: boolean) => {},
+  role: undefined as RoleType | undefined,
+  setRole: (role?: RoleType | undefined) => {},
 });
 export const useAppContext = () => {
   return useContext(AppContext);
@@ -31,12 +36,10 @@ export default function AppProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [isAuth, setIsAuthState] = useState(false);
-  const setIsAuth = useCallback((isAuth: boolean) => {
-    if (isAuth) {
-      setIsAuthState(true);
-    } else {
-      setIsAuthState(false);
+  const [role, setRoleState] = useState<RoleType | undefined>();
+  const setRole = useCallback((role?: RoleType) => {
+    setRoleState(role);
+    if (!role) {
       removeFromLocalStorage("accessToken");
       removeFromLocalStorage("refreshToken");
     }
@@ -44,11 +47,12 @@ export default function AppProvider({
   useEffect(() => {
     const accessToken = getFromLocalStorage("accessToken");
     if (accessToken) {
-      setIsAuthState(true);
+      const role = decodeToken(accessToken).role as RoleType;
+      setRoleState(role);
     }
   }, []);
   return (
-    <AppContext.Provider value={{ isAuth, setIsAuth }}>
+    <AppContext.Provider value={{ role, setRole }}>
       <QueryClientProvider client={queryClient}>
         {children}
         <RefreshToken />
